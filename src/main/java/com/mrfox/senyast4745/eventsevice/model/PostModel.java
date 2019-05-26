@@ -15,6 +15,9 @@ public class PostModel {
     @Column(name = "post_id", nullable = false, unique = true)
     private Long id;
 
+    @Column(name = "creator_id", nullable = false)
+    private Long creatorId;
+
     @Column(name = "post_name", nullable = false)
     private String articleName;
 
@@ -41,11 +44,12 @@ public class PostModel {
         super();
     }
 
-    public PostModel(String articleName, String articleText, Long parentId, int type, String[] tags, Date date) {
+    public PostModel(String articleName, String articleText, Long parentId,Long creatorId ,int type, String[] tags, Date date) {
 
         this.articleName = articleName;
         this.articleText = articleText;
         this.parentId = parentId;
+        this.creatorId = creatorId;
         this.type = type;
         this.tags = tags;
 
@@ -109,5 +113,13 @@ public class PostModel {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public Long getCreatorId() {
+        return creatorId;
+    }
+
+    public void setCreatorId(Long creatorId) {
+        this.creatorId = creatorId;
     }
 }

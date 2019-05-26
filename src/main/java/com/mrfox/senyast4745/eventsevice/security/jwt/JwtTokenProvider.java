@@ -1,6 +1,7 @@
 package com.mrfox.senyast4745.eventsevice.security.jwt;
 
 
+import com.mrfox.senyast4745.eventsevice.dao.EventDAO;
 import com.mrfox.senyast4745.eventsevice.security.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -23,14 +24,12 @@ public class JwtTokenProvider {
     private String secretKey = "hello";
 
 
-
     private final CustomUserDetailsService userDetailsService;
 
     @Autowired
     public JwtTokenProvider(CustomUserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
-
 
 
     Authentication getAuthentication(String token) {
@@ -50,14 +49,15 @@ public class JwtTokenProvider {
         return null;
     }
 
-    boolean validateToken(String token) {
+    boolean validateToken(String token) throws IllegalAccessException {
         try {
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-
-            return !claims.getBody().getExpiration().before(new Date());
+            if (claims.getBody().getIssuer().equals(EventDAO.ISSUED)) {
+                return !claims.getBody().getExpiration().before(new Date());
+            } throw new IllegalAccessException("Illegal issuer");
         } catch (JwtException e) {
             throw new InvalidJwtAuthenticationException("Expired JWT token");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             throw new InvalidJwtAuthenticationException("Invalid JWT token");
         }
     }
