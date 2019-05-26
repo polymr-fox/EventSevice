@@ -166,19 +166,25 @@ public class EventDAO {
     public EventModel subscribeUser(Long id, Long userId) {
         EventModel eventModel = eventsRepository.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("Event with id " + id + " not exist."));
-        eventModel.getUserIds().add(userId);
-        int tmp = eventModel.getSubsCount();
-        eventModel.setSubsCount(++tmp);
-        return eventsRepository.save(eventModel);
+        if (!eventModel.getUserIds().contains(userId) && userId.equals(eventModel.getCreatorId())) {
+            eventModel.getUserIds().add(userId);
+            int tmp = eventModel.getSubsCount();
+            eventModel.setSubsCount(++tmp);
+            return eventsRepository.save(eventModel);
+        }
+        throw new IllegalStateException("User with id "+userId + " can not subscribe.");
+
     }
 
     public EventModel unsubscribeUser(Long id, Long userId) {
         EventModel eventModel = eventsRepository.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("Event with id " + id + " not exist."));
-        eventModel.getUserIds().remove(userId);
-        int tmp = eventModel.getSubsCount();
-        eventModel.setSubsCount(--tmp);
-        return eventsRepository.save(eventModel);
+        if( eventModel.getUserIds().remove(userId)) {
+            int tmp = eventModel.getSubsCount();
+            eventModel.setSubsCount(--tmp);
+            return eventsRepository.save(eventModel);
+        }
+        throw new IllegalStateException("User with id "+userId + " can not unsubscribe.");
     }
 
     public Iterable<PostModel> getPosts(Long id) {
@@ -189,8 +195,8 @@ public class EventDAO {
         return postModels;
     }
 
-    public void sendNotification(UserModel[] userModels, Long id, Role role, String token) {
-
+    public void sendNotification(UserModel[] userModels, Long id, Long creatorId ,Role role, String token) throws IllegalAccessException {
+        checkAccess(id, creatorId);
         RestTemplate restTemplate = new RestTemplate();
 
         final String url = "127.0.0.1:9996/" + "notification" + role.name();

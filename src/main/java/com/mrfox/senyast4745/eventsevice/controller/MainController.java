@@ -23,7 +23,7 @@ public class MainController {
     }
 
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/create", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity create(@RequestBody CreateForm jsonForm) {
@@ -74,12 +74,15 @@ public class MainController {
         }
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/subscribe", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity subscribeUser(@RequestBody SubscribeForm form) {
         try {
             return ResponseEntity.ok(eventDAO.subscribeUser(form.getId(), form.getUserId()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(406).body(gson.toJson(new ExceptionModel(406, "Not Acceptable",
+                    e.getMessage(), "/update")));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(gson.toJson(new ExceptionModel(400, "Bad Request",
                     "Bad Request with: " + gson.toJson(form), "/subscribe")));
@@ -87,12 +90,15 @@ public class MainController {
         }
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/unsubscribe", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity unsubscribeUser(@RequestBody SubscribeForm form) {
         try {
             return ResponseEntity.ok(eventDAO.unsubscribeUser(form.getId(), form.getUserId()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(406).body(gson.toJson(new ExceptionModel(406, "Not Acceptable",
+                    e.getMessage(), "/update")));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(gson.toJson(new ExceptionModel(400, "Bad Request",
                     "Bad Request with: " + gson.toJson(form), "/unsubscribe")));
@@ -100,7 +106,7 @@ public class MainController {
         }
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/update", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity updateAll(@RequestBody UpdateAllForm form) {
@@ -116,7 +122,7 @@ public class MainController {
         }
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity deleteById(@RequestBody MinimalForm form) {
@@ -133,7 +139,7 @@ public class MainController {
     }
 
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/change", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity changeState(@RequestBody ChangeStateForm form) {
@@ -160,16 +166,19 @@ public class MainController {
         }
     }
 
-    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MOERATOR') or hasAuthority('STUDENT')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/notification", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity sendNotification(@RequestBody RequestNotificationForm form, @RequestHeader(value = "Authorization") String token) {
         try {
-            eventDAO.sendNotification(form.getUserModels(), form.getId(), form.getRole(), token);
+            eventDAO.sendNotification(form.getUserModels(), form.getId(), form.getCreatorId(), form.getRole(), token);
             return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(403).body(gson.toJson(new ExceptionModel(403, "Forbidden",
+                    "Access denied to send notifications", "/notification")));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(gson.toJson(new ExceptionModel(400, "Bad Request",
-                    "Bad Request with: " + gson.toJson(form), "/posts")));
+                    "Bad Request with: " + gson.toJson(form), "/notification")));
         }
     }
 
