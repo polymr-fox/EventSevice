@@ -172,6 +172,7 @@ public class MainController {
         }
     }
 
+	@PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/create/post", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity createPost(@RequestBody CreatePostForm form, @RequestHeader(value = "Authorization") String token) {
@@ -186,8 +187,6 @@ public class MainController {
 
         }
     }
-
-    //TODO @RequestMapping(value="create/post", method =  RequestMethod.POST)
 
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/notification", method = RequestMethod.POST)
