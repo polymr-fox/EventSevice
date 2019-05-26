@@ -23,8 +23,8 @@ public class JwtTokenProvider {
 
     private Properties property = new Properties();
 
-    @Value("${security.jwt.token.secret-key:secret}")
-    private String secretKey = "secret";
+    @Value("${jwt.secretKey:hello}")
+    private String secretKey = "hello";
 
     @Value("${security.jwt.token.expire-length:3600000}")
     private long validityInMilliseconds = 3_600_000; // 1h
@@ -36,18 +36,6 @@ public class JwtTokenProvider {
         this.userDetailsService = userDetailsService;
     }
 
-    @PostConstruct
-    protected void init() {
-        //If you want to use your password make file secret.properties
-        // and add secretKey=your_password
-        try{
-            FileInputStream fis = new FileInputStream("src/main/resources/secret.properties");
-            property.load(fis);
-            secretKey = property.getProperty("secretKey");
-        } catch (IOException ignored){}
-
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-    }
 
     public String createToken(String username, String roles) {
 
