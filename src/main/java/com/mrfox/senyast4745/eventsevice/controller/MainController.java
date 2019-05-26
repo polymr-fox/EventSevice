@@ -154,17 +154,19 @@ public class MainController {
         }
     }
 
-    @RequestMapping(value = "/posts", method = RequestMethod.POST)
+    @RequestMapping(value = "/read/posts", method = RequestMethod.POST)
     public @ResponseBody
     ResponseEntity readPosts(@RequestBody IdForm form) {
         try {
             return ResponseEntity.ok(new ResponseJsonPostForm(eventDAO.getPosts(form.getId())));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(gson.toJson(new ExceptionModel(400, "Bad Request",
-                    "Bad Request with: " + gson.toJson(form), "/posts")));
+                    "Bad Request with: " + gson.toJson(form), "/read/posts")));
 
         }
     }
+
+    //TODO @RequestMapping(value="create/post", method =  RequestMethod.POST)
 
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MODERATOR') or hasAuthority('STUDENT')")
     @RequestMapping(value = "/notification", method = RequestMethod.POST)
