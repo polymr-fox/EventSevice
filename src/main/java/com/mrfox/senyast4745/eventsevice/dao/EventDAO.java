@@ -258,8 +258,15 @@ public class EventDAO {
     }
 
     private Jws<Claims> parseToken(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(resolveToken(token));
 
+    }
+
+    private String resolveToken(String bearerToken) {
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        throw new IllegalArgumentException("Incorrect token");
     }
 
     private void checkSymbols(ArrayList<String> text){
