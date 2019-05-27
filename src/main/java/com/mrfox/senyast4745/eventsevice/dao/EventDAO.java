@@ -22,6 +22,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 @Component
 public class EventDAO {
@@ -47,16 +49,15 @@ public class EventDAO {
 
     public EventModel createEvent(String token, String eventName, String eventDescription, Long[] adminsId
             , Long[] usersId, String[] tags, boolean isOpen) {
+        ArrayList<String> tmp = new ArrayList<>(Arrays.asList(tags));
+        tmp.add(eventName);
+        tmp.add(eventName);
+        checkSymbols(tmp);
         Long creatorId = getUserIdFromToken(token);
         if (tags.length == 0) {
             throw new IllegalArgumentException("No tags found");
         }
-        for (String tmp : tags) {
-            Iterable<TagModel> tmpTag = tagsRepository.findAllByTagName(tmp);
-            if (!tmpTag.iterator().hasNext()) {
-                tagsRepository.save(new TagModel(tmp));
-            }
-        }
+        checkingTags(tags);
         return eventsRepository.save(new EventModel(creatorId, eventName, eventDescription, new ArrayList<>(Arrays.asList(adminsId)),
                 new ArrayList<>(Arrays.asList(usersId)), tags, isOpen, new Date(), usersId.length));
     }
@@ -65,12 +66,19 @@ public class EventDAO {
             , Long[] usersId, String[] tags, Boolean isOpen) throws IllegalAccessException {
         Long userId = getUserIdFromToken(token);
         checkAccess(id, userId);
+        ArrayList<String> tmp = new ArrayList<>();
         EventModel eventModels = eventsRepository.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("Event with id " + id + " not exist."));
         if (name != null && !name.isEmpty()) {
+            tmp.add(name);
+            checkSymbols(tmp);
+            tmp.clear();
             eventModels.setEventName(name);
         }
         if (description != null && !description.isEmpty()) {
+            tmp.add(description);
+            checkSymbols(tmp);
+            tmp.clear();
             eventModels.setEventDescription(description);
         }
         if (usersId != null && usersId.length > 0) {
@@ -91,6 +99,10 @@ public class EventDAO {
         }
 
         if (tags != null && tags.length > 0) {
+            tmp.addAll(Arrays.asList(tags));
+            checkSymbols(tmp);
+            tmp.clear();
+            checkingTags(tags);
             eventModels.setTags(tags);
         }
 
@@ -99,6 +111,21 @@ public class EventDAO {
         }
 
         return eventsRepository.save(eventModels);
+    }
+
+    private void checkingTags(String[] tags) {
+        Iterable<TagModel> tmpTag = tagsRepository.findAll();
+        for (String s : tags) {
+            AtomicBoolean find = new AtomicBoolean(false);
+            tmpTag.forEach((t) -> {
+                if(t.getTagName().equals(s)){
+                    find.set(true);
+                }
+            });
+            if (!find.get()) {
+                tagsRepository.save(new TagModel(s));
+            }
+        }
     }
 
 
@@ -211,6 +238,10 @@ public class EventDAO {
     }
 
     public PostModel createPost(String token, String postName, String postDescription, Long parentId, String[] tags) throws IllegalAccessException {
+        ArrayList<String> tmp = new ArrayList<>(Arrays.asList(tags));
+        tmp.add(postName);
+        tmp.add(postDescription);
+        checkSymbols(tmp);
         Long userId = getUserIdFromToken(token);
         EventModel eventModel = eventsRepository.findById(parentId).orElseThrow(() -> new IllegalArgumentException("Can not find event with id " + parentId));
         if (eventModel.getCreatorId().equals(userId)) {
@@ -228,6 +259,18 @@ public class EventDAO {
 
     private Jws<Claims> parseToken(String token) {
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+
+    }
+
+    private void checkSymbols(ArrayList<String> text){
+        String regex = "[};]";
+
+        for (String s: text
+             ) {
+            if(Pattern.matches(regex, s)){
+                throw new IllegalArgumentException("incorrect symbols in " + s);
+            }
+        }
 
     }
 }
